@@ -3,7 +3,7 @@ const request = require('supertest');
 
 describe('server', () => {
   const agent = request.agent(app);
-  afterAll(() => agent.get('/db-disconnect'));
+  afterAll(() => agent.get('/db-test/disconnect'));
   it('starts up without crashing (yay!)', (done) => {
     agent.get('/').expect(200, done);
   });
