@@ -105,3 +105,6 @@ dist
 
 # settings folder with the testing DB data
 .vscode/
+
+# sql debug files 
+*.session.sql
