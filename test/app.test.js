@@ -32,14 +32,14 @@ describe('server', () => {
     it('returns [{ id, tag_name }] on POST /search { id }', async () => {
       const { body } = await agent
         .post('/tags/search')
-        .send({ id: 42, tsq: 'customers' });
+        .send({ id: 42, tsq: 'capitalism' });
       expect(body.length).toBe(1);
-      expect(body[0]).toMatchObject({ id: 42, tag_name: 'contextually-based' });
+      expect(body[0]).toMatchObject({ id: 42, tag_name: 'FFA' });
     });
     it('returns [{ id, tag_name }] on POST /search { tsq }', async () => {
       const { body } = await agent
         .post('/tags/search')
-        .send({ tsq: 'customers' });
+        .send({ tsq: 'capitalism' });
       expect(body.length).toBe(2);
       deepStrictEqual(
         new Set(Object.keys(body[0])),
