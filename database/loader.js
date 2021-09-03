@@ -2,33 +2,45 @@ require('dotenv').config();
 const { Client } = require('pg');
 const { readFile, readdir } = require('fs/promises');
 
-const getQueries = (arr, dir) =>
+/**
+ * More info on the text search:
+ * https://gist.github.com/87002e84952936681c05d7e4b703cdec
+ *
+ */
+
+const tsDriver = 'database/ts_driver.sql';
+const schemaDir = 'database/schema';
+const seedsDir = 'database/test-seeds';
+
+const dbClient = new Client(process.env.DBKEY);
+
+const getQueries = (...arr) =>
   Promise.all(
-    arr.map((filename) => {
-      console.log(`Reading ${dir}/${filename}`);
-      return readFile(`${dir}/${filename}`, 'utf-8');
+    arr.map((path) => {
+      console.log('Reading from', path);
+      return readFile(path, 'utf-8');
     })
   );
 
-const runQueries = (queries) =>
+const runQueries = (...queries) =>
   Promise.all(queries.map((sql) => dbClient.query(sql)));
-
-const dbClient = new Client(process.env.DBKEY);
-const schemaDir = 'database/schema';
-const seedsDir = 'database/test-seeds';
 
 console.log(`\nRunning the schema files from ${schemaDir}\n`);
 
 Promise.all([dbClient.connect(), readdir(schemaDir)])
-  .then(([nothing, arr]) => getQueries(arr, schemaDir))
-  .then((queries) => runQueries(queries))
+  .then(([, arr]) => arr.map((filename) => `${schemaDir}/${filename}`))
+  .then((arr) => getQueries(/* tsDriver, */ ...arr))
+  .then((queries) => runQueries(...queries))
+  .then(() => getQueries(tsDriver))
+  .then((query) => runQueries(...query))
   .then(() =>
     console.log(
       `\nFinished with the schema, running the seeds from ${seedsDir}\n`
     )
   )
   .then(() => readdir(seedsDir))
-  .then((arr) => getQueries(arr, seedsDir))
-  .then((queries) => runQueries(queries))
+  .then((arr) => arr.map((filename) => `${seedsDir}/${filename}`))
+  .then((arr) => getQueries(...arr))
+  .then((queries) => runQueries(...queries))
   .then(() => console.log('\nFinished with the seeds\n'))
   .finally(() => dbClient.end());
