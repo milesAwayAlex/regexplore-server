@@ -48,4 +48,27 @@ describe('server', () => {
       );
     });
   });
+  describe('/regexes', () => {
+    it('returns [{ regexes: [], totalPages, pageNum }] by five on POST /', async () => {
+      const { body } = await agent.post('/regexes').type('application/json');
+      const { regexes, totalPages, pageNum } = body;
+      expect(regexes.length).toBe(5);
+      expect(totalPages).toBe(3);
+      expect(pageNum).toBe(1);
+      deepStrictEqual(
+        new Set(Object.keys(regexes[0])),
+        new Set([
+          'id',
+          'user_id',
+          'title',
+          'notes',
+          'regex',
+          'fork_of',
+          'date_created',
+          'date_edited',
+        ]),
+        'POST regexes/'
+      );
+    });
+  });
 });
