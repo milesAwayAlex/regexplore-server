@@ -10,7 +10,8 @@
   },
   "scripts": {
     "test": "jest",
-    "start": "node index.js"
+    "start": "node index.js",
+    "dbreset": "node database/loader.js"
   },
   "repository": {
     "type": "git",
