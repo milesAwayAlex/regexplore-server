@@ -1,0 +1,12 @@
+DROP TABLE IF EXISTS regexes CASCADE;
+
+CREATE TABLE regexes (
+  id SERIAL PRIMARY KEY NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  title VARCHAR(255) NOT NULL,
+  notes VARCHAR(255),
+  fork_of INTEGER NOT NULL REFERENCES regexes(id),
+  is_public BOOLEAN DEFAULT TRUE,
+  date_created TIMESTAMP DEFAULT NOW(),
+  date_edited TIMESTAMP DEFAULT NOW()
+);

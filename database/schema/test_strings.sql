@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS test_strings CASCADE;
+
+CREATE TABLE test_strings (
+  id SERIAL PRIMARY KEY NOT NULL,
+  regex_id INTEGER NOT NULL REFERENCES regexes(id) ON DELETE CASCADE,
+  test_string TEXT,
+  is_matching BOOLEAN DEFAULT TRUE
+);
