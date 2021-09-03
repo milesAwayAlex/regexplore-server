@@ -25,7 +25,7 @@ describe('server', () => {
       expect(body.length).toBe(20);
       deepStrictEqual(
         new Set(Object.keys(body[0])),
-        new Set(['id', 'tag_name']),
+        new Set(['id', 'tag_name', 'popularity']),
         'GET /tags'
       );
     });

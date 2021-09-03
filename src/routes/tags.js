@@ -2,14 +2,22 @@ const router = require('express').Router();
 
 module.exports = (db) => {
   router.get('/', async (r, res, next) => {
+    const limit = 20;
     try {
-      const { rows } = await db.query(`
-        SELECT id,
-          tag_name
-        FROM tags
-        ORDER BY tag_name
-        LIMIT 20;
-        `);
+      const { rows } = await db.query(
+        `
+      SELECT tags.id,
+        tags.tag_name,
+        COUNT(regexes_tags.regex_id) AS popularity
+      FROM tags
+        LEFT JOIN regexes_tags ON tags.id = regexes_tags.tag_id
+      GROUP BY tags.id
+      ORDER BY COUNT(regexes_tags.regex_id) DESC,
+        tags.id ASC
+      LIMIT $1::INTEGER;
+        `,
+        [limit]
+      );
       res.json(rows);
     } catch (e) {
       next(e);
@@ -24,8 +32,8 @@ module.exports = (db) => {
         SELECT id,
           tag_name
         FROM tags
-        WHERE id = $1;
-         `,
+        WHERE id = $1::INTEGER;
+          `,
           [id]
         );
         res.json(rows);
@@ -35,7 +43,7 @@ module.exports = (db) => {
         SELECT id,
           tag_name
         FROM tags
-        WHERE tsv @@ websearch_to_tsquery('english', $1);
+        WHERE tsv @@ websearch_to_tsquery('english', $1::TEXT);
           `,
           [tsq]
         );
