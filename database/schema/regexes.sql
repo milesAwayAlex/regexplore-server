@@ -5,6 +5,7 @@ CREATE TABLE regexes (
   user_id INTEGER NOT NULL REFERENCES users(id),
   title VARCHAR(255) NOT NULL,
   notes VARCHAR(255),
+  weighted_tsv TSVECTOR,
   fork_of INTEGER NOT NULL REFERENCES regexes(id),
   is_public BOOLEAN DEFAULT TRUE,
   date_created TIMESTAMP DEFAULT NOW(),
