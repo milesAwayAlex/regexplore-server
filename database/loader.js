@@ -31,11 +31,16 @@ Promise.all([dbClient.connect(), readdir(schemaDir)])
   .then(([, arr]) => arr.map((filename) => `${schemaDir}/${filename}`))
   .then((arr) => getQueries(/* tsDriver, */ ...arr))
   .then((queries) => runQueries(...queries))
+  .then(() =>
+    console.log(
+      `\nFinished with the schema, running the text search driver from ${tsDriver}\n`
+    )
+  )
   .then(() => getQueries(tsDriver))
   .then((query) => runQueries(...query))
   .then(() =>
     console.log(
-      `\nFinished with the schema, running the seeds from ${seedsDir}\n`
+      `\nFinished with the setup, running the seeds from ${seedsDir}\n`
     )
   )
   .then(() => readdir(seedsDir))
