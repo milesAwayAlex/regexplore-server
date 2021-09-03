@@ -17,16 +17,18 @@ const dbClient = new Client(process.env.DBKEY);
 const schemaDir = 'database/schema';
 const seedsDir = 'database/test-seeds';
 
-console.log('Running the schema files from', schemaDir);
+console.log(`\nRunning the schema files from ${schemaDir}\n`);
 
 Promise.all([dbClient.connect(), readdir(schemaDir)])
   .then(([nothing, arr]) => getQueries(arr, schemaDir))
   .then((queries) => runQueries(queries))
   .then(() =>
-    console.log('Finished with the schema, running the seeds from', seedsDir)
+    console.log(
+      `\nFinished with the schema, running the seeds from ${seedsDir}\n`
+    )
   )
   .then(() => readdir(seedsDir))
   .then((arr) => getQueries(arr, seedsDir))
   .then((queries) => runQueries(queries))
-  .then(() => console.log('Finished with the seeds'))
+  .then(() => console.log('\nFinished with the seeds\n'))
   .finally(() => dbClient.end());
