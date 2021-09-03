@@ -1,5 +1,6 @@
 const { app } = require('../src/app');
 const request = require('supertest');
+const { deepStrictEqual } = require('assert/strict');
 
 describe('server', () => {
   const agent = request.agent(app);
@@ -16,5 +17,24 @@ describe('server', () => {
           throw new Error('database smoke test');
       })
       .end(done);
+  });
+  describe('/tags', () => {
+    it('returns the list of tags on /', async () => {
+      const { status, body } = await agent.get('/tags');
+      expect(status).toBe(200);
+      expect(body.length).toBe(20);
+      deepStrictEqual(
+        new Set(Object.keys(body[0])),
+        new Set(['id', 'tag_name']),
+        'GET /tags'
+      );
+    });
+    it('returns the tag on POST /search with { id }', async () => {
+      const { status, body } = await agent
+        .post('/tags/search')
+        .send({ id: 42 });
+      expect(status).toEqual(200);
+      expect(body[0]).toMatchObject({ id: 42, tag_name: 'contextually-based' });
+    });
   });
 });
