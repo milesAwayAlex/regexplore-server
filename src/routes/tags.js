@@ -25,8 +25,19 @@ module.exports = (db) => {
           tag_name
         FROM tags
         WHERE id = $1;
-      `,
-          [body.id]
+         `,
+          [id]
+        );
+        res.json(rows);
+      } else {
+        const { rows } = await db.query(
+          `
+        SELECT id,
+          tag_name
+        FROM tags
+        WHERE tsv @@ websearch_to_tsquery('english', $1);
+          `,
+          [tsq]
         );
         res.json(rows);
       }
