@@ -29,12 +29,23 @@ describe('server', () => {
         'GET /tags'
       );
     });
-    it('returns the tag on POST /search with { id }', async () => {
-      const { status, body } = await agent
+    it('returns [{ id, tag_name }] on POST /search { id }', async () => {
+      const { body } = await agent
         .post('/tags/search')
-        .send({ id: 42 });
-      expect(status).toEqual(200);
+        .send({ id: 42, tsq: 'customers' });
+      expect(body.length).toBe(1);
       expect(body[0]).toMatchObject({ id: 42, tag_name: 'contextually-based' });
+    });
+    it('returns [{ id, tag_name }] on POST /search { tsq }', async () => {
+      const { body } = await agent
+        .post('/tags/search')
+        .send({ tsq: 'customers' });
+      expect(body.length).toBe(2);
+      deepStrictEqual(
+        new Set(Object.keys(body[0])),
+        new Set(['id', 'tag_name']),
+        'POST /search { tsq }'
+      );
     });
   });
 });
