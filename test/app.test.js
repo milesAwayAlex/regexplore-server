@@ -66,6 +66,7 @@ describe('server', () => {
           'fork_of',
           'date_created',
           'date_edited',
+          'tags',
         ]),
         'POST regexes/'
       );
