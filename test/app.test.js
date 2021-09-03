@@ -49,7 +49,7 @@ describe('server', () => {
     });
   });
   describe('/regexes', () => {
-    it('returns [{ regexes: [], totalPages, pageNum }] by five on POST /', async () => {
+    it('returns the first page of 5 regexes [{ regexes: [], totalPages, pageNum }] on POST /', async () => {
       const { body } = await agent.post('/regexes').type('application/json');
       const { regexes, totalPages, pageNum } = body;
       expect(regexes.length).toBe(5);
@@ -69,6 +69,13 @@ describe('server', () => {
         ]),
         'POST regexes/'
       );
+    });
+    it('returns the third page on POST / { requestedPage }', async () => {
+      const { body } = await agent.post('/regexes').send({ requestedPage: 3 });
+      const { regexes, totalPages, pageNum } = body;
+      expect(regexes.length).toBe(5);
+      expect(totalPages).toBe(3);
+      expect(pageNum).toBe(3);
     });
   });
 });
