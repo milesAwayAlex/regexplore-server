@@ -102,3 +102,9 @@ dist
 
 # TernJS port file
 .tern-port
+
+# settings folder with the testing DB data
+.vscode/
+
+# sql debug files 
+*.session.sql

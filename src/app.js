@@ -1,6 +1,5 @@
 const express = require('express');
 const { Client } = require('pg');
-require('dotenv').config();
 
 // routers
 const dbTestRouter = require('./routes/db');
