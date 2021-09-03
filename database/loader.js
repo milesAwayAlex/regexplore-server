@@ -4,7 +4,7 @@ const { readFile, readdir } = require('fs/promises');
 
 /**
  * More info on the text search:
- * https://gist.github.com/87002e84952936681c05d7e4b703cdec
+ * https://gist.github.com/milesAwayAlex/2b0ea6dc14e452a322afd8cdddd9fc56
  *
  */
 
