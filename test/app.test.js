@@ -19,7 +19,7 @@ describe('server', () => {
       .end(done);
   });
   describe('/tags', () => {
-    it('returns the list of tags on /', async () => {
+    it('returns [{ id, tag_name, popularity }] of top 20 tags on /', async () => {
       const { status, body } = await agent.get('/tags');
       expect(status).toBe(200);
       expect(body.length).toBe(20);
