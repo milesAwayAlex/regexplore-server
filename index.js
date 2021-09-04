@@ -1,6 +1,9 @@
 require('dotenv').config();
+const PORT = process.env.PORT;
 const { app } = require('./src/app');
 
-const PORT = process.env.PORT || 8080;
+if (process.env.NODE_ENV === 'development') {
+  app.use(require('morgan')('dev'));
+}
 
-app.listen(PORT, () => console.log('RegExpLore Server is listening on', PORT));
+app.listen(PORT);
