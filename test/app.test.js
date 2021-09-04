@@ -62,6 +62,7 @@ describe('server', () => {
         new Set([
           'id',
           'user_id',
+          'user_name',
           'title',
           'notes',
           'regex',
