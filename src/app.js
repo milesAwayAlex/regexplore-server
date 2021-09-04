@@ -5,6 +5,7 @@ const { Client } = require('pg');
 const dbTestRouter = require('./routes/db');
 const tagsRouter = require('./routes/tags');
 const regexesRouter = require('./routes/regexes');
+const testStringRouter = require('./routes/testStrings');
 
 const app = express();
 app.use(express.json());
@@ -20,5 +21,6 @@ app.use('/db-test', dbTestRouter(dbClient));
 
 app.use('/tags', tagsRouter(dbClient));
 app.use('/regexes', regexesRouter(dbClient));
+app.use('/test-strings', testStringRouter(dbClient));
 
 module.exports = { app };

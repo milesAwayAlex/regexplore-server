@@ -79,4 +79,16 @@ describe('server', () => {
       expect(pageNum).toBe(3);
     });
   });
+  describe('test-strings', () => {
+    it('returns [{ id, test_string, is_matching }] on POST /search { id }', async () => {
+      const { body } = await agent.post('/test-strings/search').send({ id: 5 });
+      expect(body[0]).toMatchObject({
+        id: 5,
+        test_string:
+          'id justo sit amet sapien dignissim vestibulum vestibulum ante ipsum primis in faucibus orci luctus et',
+        is_matching: true,
+      });
+      expect(Array.isArray(body)).toBe(true);
+    });
+  });
 });
