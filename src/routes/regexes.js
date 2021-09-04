@@ -5,14 +5,37 @@ module.exports = (db) => {
     // can recieve 0, 1, 2, or 3 of these
     const { tags, tsq, requestedPage } = body;
 
-    // set the query modules
-    let tagsQuery =
-      (!!tags && !!tags.length && `AND tags.id IN (${tags.join(', ')})`) || '';
-    let sortingModule = 'ORDER BY regexes.date_created DESC';
-
     // the numbers used in the offset calculation
     const pageNum = (!!requestedPage && requestedPage - 1) || 0;
     const offset = 5;
+
+    // start assembling the arguments array
+    const queryArgs = [offset, pageNum];
+
+    // set the query modules
+    let tagsFilter = '';
+    if (!!tags && !!tags.length) {
+      // build a string of substitution tokens
+      const tokens = tags
+        .map((t) => {
+          // update the arguments array
+          queryArgs.push(t);
+          return `$${queryArgs.length}::INTEGER`;
+        })
+        .join();
+      tagsFilter = `AND tags.id IN (${tokens})`;
+    }
+    // TODO other ordering options?.
+    let sortingModule = 'ORDER BY regexes.date_created DESC';
+    if (!!tsq) {
+      queryArgs.push(tsq);
+      sortingModule = `
+    ORDER BY ts_rank(
+      weighted_tsv,
+      to_tsquery('english', $${queryArgs.length}::TEXT)
+    ) DESC
+        `;
+    }
     try {
       const [{ rows }, total] = await Promise.all([
         db.query(
@@ -30,12 +53,12 @@ module.exports = (db) => {
           LEFT JOIN regexes_tags ON regexes.id = regexes_tags.regex_id
           LEFT JOIN tags ON regexes_tags.tag_id = tags.id
         WHERE regexes.is_public IS TRUE
-          ${tagsQuery}
+          ${tagsFilter}
         GROUP BY regexes.id
           ${sortingModule}
         LIMIT $1::INTEGER OFFSET $1::INTEGER * $2::INTEGER;
           `,
-          [offset, pageNum]
+          queryArgs
         ),
         db.query(
           `
