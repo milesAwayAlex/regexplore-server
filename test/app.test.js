@@ -19,8 +19,10 @@ describe('server', () => {
       .end(done);
   });
   describe('/tags', () => {
-    it('returns [{ id, tag_name, popularity }] of top 20 tags on /', async () => {
-      const { status, body } = await agent.get('/tags');
+    it('returns [{ id, tag_name, popularity }] of top 20 tags on POST /', async () => {
+      const { status, body } = await agent
+        .post('/tags')
+        .type('application/json');
       expect(status).toBe(200);
       expect(body.length).toBe(20);
       deepStrictEqual(
