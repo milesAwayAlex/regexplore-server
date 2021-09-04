@@ -78,7 +78,7 @@ describe('server', () => {
       expect(totalPages).toBe(3);
       expect(pageNum).toBe(3);
     });
-    it('filters the results againtst the tags on POST / [tag_id]', async () => {
+    it('filters the results againtst the tags on POST / { [tag_id] }', async () => {
       const { body } = await agent
         .post('/regexes')
         .send({ tags: [33, 66, 99], requestedPage: 1 });
@@ -86,6 +86,17 @@ describe('server', () => {
       expect(regexes.length).toBe(2);
       expect(totalPages).toBe(3);
       expect(pageNum).toBe(1);
+    });
+    it('orders the results by the lexical rank on POST / { tsq }', async () => {
+      const { body } = await agent
+        .post('/regexes')
+        .send({ tsq: 'numbers', requestedPage: 1 });
+      const { regexes, totalPages } = body;
+      expect(regexes.length).toBe(5);
+      expect(totalPages).toBe(3);
+      expect(regexes[0].title).toBe('Simple Number');
+      expect(regexes[1].title).toBe('Phone Numbers');
+      expect(regexes[2].title).toBe('Password Validation');
     });
   });
   describe('/test-strings', () => {
