@@ -78,6 +78,15 @@ describe('server', () => {
       expect(totalPages).toBe(3);
       expect(pageNum).toBe(3);
     });
+    it('filters the results againtst the tags on POST / [tag_id]', async () => {
+      const { body } = await agent
+        .post('/regexes')
+        .send({ tags: [33, 66, 99], requestedPage: 1 });
+      const { regexes, totalPages, pageNum } = body;
+      expect(regexes.length).toBe(2);
+      expect(totalPages).toBe(3);
+      expect(pageNum).toBe(1);
+    });
   });
   describe('/test-strings', () => {
     it('returns [{ id, test_string, is_matching }] on POST /search { id }', async () => {
