@@ -49,11 +49,18 @@ module.exports = (db) => {
           fork_of,
           date_created,
           date_edited,
-          json_object_agg(COALESCE(tags.id, 0), tags.tag_name) AS tags
+          json_agg(t.tag_obj) AS tags
         FROM regexes
           LEFT JOIN users ON users.id = regexes.user_id
           LEFT JOIN regexes_tags ON regexes.id = regexes_tags.regex_id
           LEFT JOIN tags ON regexes_tags.tag_id = tags.id
+          LEFT JOIN (
+            SELECT regexes_tags.regex_id,
+              json_object_agg(COALESCE(tags.id, 0), tags.tag_name) AS tag_obj
+            FROM regexes_tags
+              JOIN tags ON regexes_tags.tag_id = tags.id
+            GROUP BY regexes_tags.regex_id
+          ) t ON t.regex_id = regexes.id
         WHERE regexes.is_public IS TRUE
           ${tagsFilter}
         GROUP BY regexes.id,
@@ -72,9 +79,13 @@ module.exports = (db) => {
           [offset]
         ),
       ]);
+      const regexes = rows.map((regex) => ({
+        ...regex,
+        tags: regex.tags[0],
+      }));
       res.json({
         pageNum: pageNum + 1,
-        regexes: rows,
+        regexes,
         totalPages: Math.ceil(parseFloat(total.rows[0].total_pages)),
       });
     } catch (e) {
