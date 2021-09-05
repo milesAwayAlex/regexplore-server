@@ -87,7 +87,7 @@ describe('server', () => {
         .send({ tags: [33, 66, 99], requestedPage: 1 });
       const { regexes, totalPages, pageNum } = body;
       expect(regexes.length).toBe(2);
-      expect(totalPages).toBe(3);
+      expect(totalPages).toBe(1);
       expect(pageNum).toBe(1);
     });
     it('orders the results by the lexical rank on POST / { tsq }', async () => {
@@ -96,7 +96,7 @@ describe('server', () => {
         .send({ tsq: 'numbers', requestedPage: 1 });
       const { regexes, totalPages } = body;
       expect(regexes.length).toBe(3);
-      expect(totalPages).toBe(3);
+      expect(totalPages).toBe(1);
       expect(regexes[0].title).toBe('Simple Number');
       expect(regexes[1].title).toBe('Phone Numbers');
       expect(regexes[2].title).toBe('Password Validation');
