@@ -1,7 +1,7 @@
 const router = require('express').Router();
 
 module.exports = (db) => {
-  router.get('/', async (r, res, next) => {
+  router.post('/', async (r, res, next) => {
     const limit = 20;
     try {
       const { rows } = await db.query(

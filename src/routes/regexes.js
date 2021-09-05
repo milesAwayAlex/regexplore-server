@@ -10,10 +10,10 @@ module.exports = (db) => {
     const offset = 5;
 
     // start assembling the arguments array
-    const queryArgs = [offset, pageNum];
+    const queryArgs = [];
 
     // set the query modules
-    let tagsFilter = '';
+    let filter = 'WHERE regexes.is_public IS TRUE\n';
     if (!!tags && !!tags.length) {
       // build a string of substitution tokens
       const tokens = tags
@@ -23,7 +23,7 @@ module.exports = (db) => {
           return `$${queryArgs.length}::INTEGER`;
         })
         .join();
-      tagsFilter = `AND tags.id IN (${tokens})`;
+      filter += `AND regexes_tags.tag_id IN (${tokens})\n`;
     }
     // TODO other ordering options?.
     let sortingModule = 'ORDER BY regexes.date_created DESC';
@@ -35,6 +35,12 @@ module.exports = (db) => {
       to_tsquery('english', $${queryArgs.length}::TEXT)
     ) DESC
         `;
+      filter += `
+    AND ts_rank(
+      weighted_tsv,
+      to_tsquery('english', $${queryArgs.length}::TEXT)
+    ) > 0
+      `;
     }
     try {
       const [{ rows }, total] = await Promise.all([
@@ -42,39 +48,60 @@ module.exports = (db) => {
           `
         SELECT regexes.id,
           user_id,
+          users.name AS user_name,
           title,
           notes,
           regex,
           fork_of,
           date_created,
           date_edited,
-          json_object_agg(COALESCE(tags.id, 0), tags.tag_name) AS tags
+          json_agg(t.tag_obj) AS tags
         FROM regexes
+          LEFT JOIN users ON users.id = regexes.user_id
           LEFT JOIN regexes_tags ON regexes.id = regexes_tags.regex_id
           LEFT JOIN tags ON regexes_tags.tag_id = tags.id
-        WHERE regexes.is_public IS TRUE
-          ${tagsFilter}
-        GROUP BY regexes.id
+          LEFT JOIN (
+            SELECT regexes_tags.regex_id,
+              json_object_agg(COALESCE(tags.id, 0), tags.tag_name) AS tag_obj
+            FROM regexes_tags
+              JOIN tags ON regexes_tags.tag_id = tags.id
+            GROUP BY regexes_tags.regex_id
+          ) t ON t.regex_id = regexes.id
+          ${filter}
+        GROUP BY regexes.id,
+          users.id
           ${sortingModule}
-        LIMIT $1::INTEGER OFFSET $1::INTEGER * $2::INTEGER;
+        LIMIT $${queryArgs.length + 1}::INTEGER OFFSET $${
+            queryArgs.length + 1
+          }::INTEGER * $${queryArgs.length + 2}::INTEGER;
           `,
-          queryArgs
+          [...queryArgs, offset, pageNum]
         ),
         db.query(
           `
-          SELECT COUNT(regexes.id) / $1::INTEGER AS total_pages
-          FROM regexes
-          WHERE is_public IS TRUE;
+          SELECT sum(c.total_rows) AS num_rows
+          FROM (
+              SELECT COUNT(DISTINCT regexes.id) AS total_rows
+              FROM regexes
+                LEFT JOIN regexes_tags ON regexes.id = regexes_tags.regex_id
+              ${filter}
+              GROUP BY regexes.id
+            ) c;
           `,
-          [offset]
+          queryArgs
         ),
       ]);
+      const regexes = rows.map((regex) => ({
+        ...regex,
+        tags: regex.tags[0],
+      }));
       res.json({
         pageNum: pageNum + 1,
-        regexes: rows,
-        totalPages: Math.ceil(parseFloat(total.rows[0].total_pages)),
+        regexes,
+        totalPages: Math.ceil(Number.parseInt(total.rows[0].num_rows) / offset),
       });
     } catch (e) {
+      console.error(e);
       next(e);
     }
   });

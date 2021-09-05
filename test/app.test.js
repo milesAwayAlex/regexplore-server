@@ -19,8 +19,10 @@ describe('server', () => {
       .end(done);
   });
   describe('/tags', () => {
-    it('returns [{ id, tag_name, popularity }] of top 20 tags on /', async () => {
-      const { status, body } = await agent.get('/tags');
+    it('returns [{ id, tag_name, popularity }] of top 20 tags on POST /', async () => {
+      const { status, body } = await agent
+        .post('/tags')
+        .type('application/json');
       expect(status).toBe(200);
       expect(body.length).toBe(20);
       deepStrictEqual(
@@ -60,6 +62,7 @@ describe('server', () => {
         new Set([
           'id',
           'user_id',
+          'user_name',
           'title',
           'notes',
           'regex',
@@ -84,7 +87,7 @@ describe('server', () => {
         .send({ tags: [33, 66, 99], requestedPage: 1 });
       const { regexes, totalPages, pageNum } = body;
       expect(regexes.length).toBe(2);
-      expect(totalPages).toBe(3);
+      expect(totalPages).toBe(1);
       expect(pageNum).toBe(1);
     });
     it('orders the results by the lexical rank on POST / { tsq }', async () => {
@@ -92,8 +95,8 @@ describe('server', () => {
         .post('/regexes')
         .send({ tsq: 'numbers', requestedPage: 1 });
       const { regexes, totalPages } = body;
-      expect(regexes.length).toBe(5);
-      expect(totalPages).toBe(3);
+      expect(regexes.length).toBe(3);
+      expect(totalPages).toBe(1);
       expect(regexes[0].title).toBe('Simple Number');
       expect(regexes[1].title).toBe('Phone Numbers');
       expect(regexes[2].title).toBe('Password Validation');
