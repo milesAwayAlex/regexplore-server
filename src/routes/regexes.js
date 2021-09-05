@@ -27,6 +27,7 @@ module.exports = (db) => {
     }
     // TODO other ordering options?.
     let sortingModule = 'ORDER BY regexes.date_created DESC';
+    let relevanceFilter = '';
     if (!!tsq) {
       queryArgs.push(tsq);
       sortingModule = `
@@ -35,6 +36,12 @@ module.exports = (db) => {
       to_tsquery('english', $${queryArgs.length}::TEXT)
     ) DESC
         `;
+      relevanceFilter = `
+    AND ts_rank(
+      weighted_tsv,
+      to_tsquery('english', $${queryArgs.length}::TEXT)
+    ) > 0
+      `;
     }
     try {
       const [{ rows }, total] = await Promise.all([
@@ -63,6 +70,7 @@ module.exports = (db) => {
           ) t ON t.regex_id = regexes.id
         WHERE regexes.is_public IS TRUE
           ${tagsFilter}
+          ${relevanceFilter}
         GROUP BY regexes.id,
           users.id
           ${sortingModule}

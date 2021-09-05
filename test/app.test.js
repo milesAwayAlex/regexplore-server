@@ -95,7 +95,7 @@ describe('server', () => {
         .post('/regexes')
         .send({ tsq: 'numbers', requestedPage: 1 });
       const { regexes, totalPages } = body;
-      expect(regexes.length).toBe(5);
+      expect(regexes.length).toBe(3);
       expect(totalPages).toBe(3);
       expect(regexes[0].title).toBe('Simple Number');
       expect(regexes[1].title).toBe('Phone Numbers');
