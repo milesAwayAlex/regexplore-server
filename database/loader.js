@@ -8,9 +8,9 @@ const { readFile, readdir } = require('fs/promises');
  *
  */
 
-const tsDriver = 'database/ts_driver.sql';
-const schemaDir = 'database/schema';
-const seedsDir = 'database/test-seeds';
+const tsDriver = process.env.DB_TSDRIVER;
+const schemaDir = process.env.DB_SCHEMADIR;
+const seedsDir = process.env.DB_SEEDSDIR;
 
 const dbClient = new Client(process.env.DBKEY);
 
