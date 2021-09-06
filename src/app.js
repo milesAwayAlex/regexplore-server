@@ -27,6 +27,7 @@ app.use('/db-test', dbTestRouter(dbClient));
 
 // TODO remove
 app.use('/', localAuthRouter(dbClient));
+
 app.use('/tags', tagsRouter(dbClient));
 app.use('/regexes', regexesRouter(dbClient));
 app.use('/test-strings', testStringRouter(dbClient));

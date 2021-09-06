@@ -120,7 +120,7 @@ describe('server', () => {
       expect(status).toBe(400);
     });
     it('returns ok with proper credentials', async () => {
-      const { status, error } = await agent.post('/login').send({
+      const { status } = await agent.post('/login').send({
         username: 'test@user.io',
         password: 'testing-testing-testing',
       });
