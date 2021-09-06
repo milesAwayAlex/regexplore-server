@@ -32,3 +32,10 @@ VALUES (
     'ratmir@admin.ch',
     '8cf2bdb8d498ef244cb5600075af610fccaa4a59f5e624471154f801a0bad73f'
   );
+
+INSERT INTO users (name, email, pass_hash)
+VALUES (
+    'Test User',
+    'test@user.io',
+    '$2a$10$9QO7CVAiGR5fxycS9wVJHeeEoEXEV6mWRilVgrlnZyt3MspRYqKmK'
+  );
