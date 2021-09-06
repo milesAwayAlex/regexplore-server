@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const writeRouter = require('./regexes-write');
 
 module.exports = (db) => {
   router.post('/', async ({ body }, res, next) => {
@@ -106,6 +107,7 @@ module.exports = (db) => {
       next(e);
     }
   });
+  router.use('/write', writeRouter(db));
 
   return router;
 };
