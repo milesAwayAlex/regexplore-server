@@ -31,16 +31,18 @@ module.exports = (db) => {
       }
     })
   );
-  passport.serializeUser(({ id }, done) => {
-    done(null, id);
+  passport.serializeUser((u, done) => done(null, u));
+  passport.deserializeUser((u, done) => done(null, u));
+  router.post('/login', passport.authenticate('local'), async (req, res) => {
+    res.send('ok');
   });
-  passport.deserializeUser((id, done) => done(null, id));
-  router.post(
-    '/login',
-    passport.authenticate('local'),
-    async (req, res, next) => {
-      res.status(200).send('ok');
-    }
-  );
+  router.post('/protected', ({ user }, res) => {
+    if (!user?.id) res.status(401).json({ error: 'session not found' });
+    res.json(user);
+  });
+  router.post('/logout', (req, res) => {
+    req.session = null;
+    res.send('logged out');
+  });
   return router;
 };

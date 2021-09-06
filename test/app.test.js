@@ -28,7 +28,7 @@ describe('server', () => {
       deepStrictEqual(
         new Set(Object.keys(body[0])),
         new Set(['id', 'tag_name', 'popularity']),
-        'GET /tags'
+        'POST /tags'
       );
     });
     it('returns [{ id, tag_name }] on POST /search { id }', async () => {
@@ -119,12 +119,26 @@ describe('server', () => {
       const { status } = await agent.post('/login').type('application/json');
       expect(status).toBe(400);
     });
-    it('returns ok with proper credentials', async () => {
+    it('logs in with proper credentials', async () => {
       const { status } = await agent.post('/login').send({
         username: 'test@user.io',
         password: 'testing-testing-testing',
       });
       expect(status).toBe(200);
+    });
+    it('maintains the session', async () => {
+      const { body } = await agent.post('/protected').type('application/json');
+      expect(body).toMatchObject({ id: 6, name: 'Test User' });
+    });
+    it('logs out', async () => {
+      const { status } = await agent.post('/logout').type('application/json');
+      expect(status).toBe(200);
+    });
+    it('protects the endpoint', async () => {
+      const { status } = await agent
+        .post('/protected')
+        .type('application/json');
+      expect(status).toBe(401);
     });
   });
 });
