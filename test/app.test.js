@@ -137,10 +137,10 @@ describe('server', () => {
       });
     });
     describe('/regexes/write', () => {
-      it('{ title, notes, regex, testStr } => { id, testStrID }', async () => {
+      it('{ title, notes, regex, testStr } => { id, exists }', async () => {
         const {
           status,
-          body: { id, testStrID },
+          body: { id, exists },
         } = await agent.post('/regexes/write').send({
           title: 'Test Regex',
           notes: 'Notes go here',
@@ -150,7 +150,7 @@ describe('server', () => {
         });
         expect(status).toBe(200);
         expect(id).toBe(21);
-        expect(testStrID).toBe(21);
+        expect(exists).toBe(true);
       });
     });
     it('/protected with a session', async () => {
