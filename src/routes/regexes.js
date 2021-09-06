@@ -101,6 +101,7 @@ module.exports = (db) => {
         totalPages: Math.ceil(Number.parseInt(total.rows[0].count) / offset),
       });
     } catch (e) {
+      // TODO remove
       console.error(e);
       next(e);
     }
