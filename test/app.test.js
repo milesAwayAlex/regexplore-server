@@ -101,6 +101,14 @@ describe('server', () => {
       expect(regexes[1].title).toBe('Phone Numbers');
       expect(regexes[2].title).toBe('Password Validation');
     });
+    it('has a protected /write endpoint', async () => {
+      const {
+        status,
+        body: { error },
+      } = await agent.post('/regexes/write').type('application/json');
+      expect(status).toBe(401);
+      expect(error).toBeDefined();
+    });
   });
   describe('/test-strings', () => {
     it('returns [{ id, test_string, is_matching }] on POST /search { id }', async () => {
@@ -114,27 +122,46 @@ describe('server', () => {
       expect(Array.isArray(body.rows)).toBe(true);
     });
   });
-  describe('/login', () => {
-    it('returns Bad Request with no credentials', async () => {
-      const { status } = await agent.post('/login').type('application/json');
-      expect(status).toBe(400);
-    });
-    it('logs in with proper credentials', async () => {
-      const { status } = await agent.post('/login').send({
-        username: 'test@user.io',
-        password: 'testing-testing-testing',
+  describe('Protected routes', () => {
+    describe('/login', () => {
+      it('returns Bad Request with no credentials', async () => {
+        const { status } = await agent.post('/login').type('application/json');
+        expect(status).toBe(400);
       });
-      expect(status).toBe(200);
+      it('logs in with proper credentials', async () => {
+        const { status } = await agent.post('/login').send({
+          username: 'test@user.io',
+          password: 'testing-testing-testing',
+        });
+        expect(status).toBe(200);
+      });
     });
-    it('maintains the session', async () => {
+    describe('/regexes/write', () => {
+      it('{ title, notes, regex, testStr } => { id, testStrID }', async () => {
+        const {
+          status,
+          body: { id, testStrID },
+        } = await agent.post('/regexes/write').send({
+          title: 'Test Regex',
+          notes: 'Notes go here',
+          regex: 't(es)*t',
+          testStr: 'teseset',
+          tags: [{ id: 42, tagName: 'will matter later' }],
+        });
+        expect(status).toBe(200);
+        expect(id).toBe(21);
+        expect(testStrID).toBe(21);
+      });
+    });
+    it('/protected with a session', async () => {
       const { body } = await agent.post('/protected').type('application/json');
       expect(body).toMatchObject({ id: 6, name: 'Test User' });
     });
-    it('logs out', async () => {
+    it('/logout', async () => {
       const { status } = await agent.post('/logout').type('application/json');
       expect(status).toBe(200);
     });
-    it('protects the endpoint', async () => {
+    it('/protected', async () => {
       const { status } = await agent
         .post('/protected')
         .type('application/json');

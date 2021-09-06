@@ -9,6 +9,7 @@
     ]
   },
   "scripts": {
+    "pretest": "yarn dbreset",
     "test": "jest",
     "start": "node index.js",
     "dbreset": "node database/loader.js"
