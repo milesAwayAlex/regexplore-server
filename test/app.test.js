@@ -137,11 +137,8 @@ describe('server', () => {
       });
     });
     describe('/regexes/write', () => {
-      it('{ title, notes, regex, testStr } => { id, exists }', async () => {
-        const {
-          status,
-          body: { id, exists },
-        } = await agent.post('/regexes/write').send({
+      it('{ title, notes, regex, testStr, tags: [{ id, tagName }] } => { id, exists, tagsCreated, tagsAssociated }', async () => {
+        const { status, body } = await agent.post('/regexes/write').send({
           title: 'Test Regex',
           notes: 'Notes go here',
           regex: 't(es)*t',
@@ -149,8 +146,58 @@ describe('server', () => {
           tags: [{ id: 42, tagName: 'will matter later' }],
         });
         expect(status).toBe(200);
-        expect(id).toBe(21);
-        expect(exists).toBe(true);
+        expect(body).toMatchObject({
+          id: 21,
+          exists: true,
+          tagsCreated: 0,
+          tagsAssociated: 1,
+        });
+      });
+      it('(generate new tags) { title, notes, regex, testStr, tags: [{ id, tagName }, { tagName }] } => { id, exists, tagsCreated, tagsAssociated }', async () => {
+        const { status, body } = await agent.post('/regexes/write').send({
+          title: 'Test Regex',
+          notes: 'Notes go here',
+          regex: 't(es)*t',
+          testStr: 'teseset',
+          tags: [
+            { id: 42, tagName: 'existing tag' },
+            { tagName: 'new tag' },
+            { tagName: 'new tag 2' },
+          ],
+        });
+        expect(status).toBe(200);
+        expect(body).toMatchObject({
+          id: 22,
+          exists: true,
+          tagsCreated: 2,
+          tagsAssociated: 3,
+        });
+      });
+      it('(no tags array) { title, notes, regex, testStr } => { id, exists, tagsCreated, tagsAssociated }', async () => {
+        const { status, body } = await agent.post('/regexes/write').send({
+          title: 'Test Regex',
+          notes: 'Notes go here',
+          regex: 't(es)*t',
+          testStr: 'teseset',
+        });
+        expect(status).toBe(200);
+        expect(body).toMatchObject({
+          id: 23,
+          exists: true,
+          tagsCreated: 0,
+          tagsAssociated: 0,
+        });
+      });
+      it('(no title no regex) { notes, testStr, tags } => 400 { error }', async () => {
+        const { status, body } = await agent.post('/regexes/write').send({
+          notes: 'Notes go here',
+          testStr: 'teseset',
+          tags: [{ id: 42, tagName: 'will matter later' }],
+        });
+        expect(status).toBe(400);
+        expect(body).toMatchObject({
+          error: 'A regex requires a title and a literal',
+        });
       });
     });
     it('/protected with a session', async () => {
