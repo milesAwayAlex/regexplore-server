@@ -33,8 +33,6 @@ module.exports = (db) => {
           }
         );
 
-      // TODO update regexes, regexes_tags, and test_strings can run in parallel
-
       // assemble the values for tag generation
       const tagValuesStr = newTags?.map((n, i) => `($${i + 1}::TEXT)`)?.join();
 
@@ -138,6 +136,14 @@ module.exports = (db) => {
           DELETE FROM test_strings
           WHERE regex_id = $1::INTEGER
           `,
+            [confirmedID]
+          ),
+          // clear the existing connections (allows untagging regexes)
+          db.query(
+            `
+          DELETE FROM regexes_tags
+          WHERE regex_id = $1::INTEGER
+            `,
             [confirmedID]
           ),
         ]);
