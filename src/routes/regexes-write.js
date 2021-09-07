@@ -95,11 +95,19 @@ module.exports = (db) => {
         [confirmedID, exists] = [id, is_public];
       }
 
-      // assemble the VALUES for regexes_tags insertion
-
+      // assemble the values for regexes_tags insertion
       const regexesTagsStr = existingTags
         ?.map((e, i) => `($1::INTEGER, $${i + 2}::INTEGER)`)
         ?.join();
+
+      // remove the existing test string
+      await db.query(
+        `
+      DELETE FROM test_strings
+      WHERE regex_id = $1::INTEGER
+      `,
+        [confirmedID]
+      );
 
       // insert into test_strings and regexes_tags
       const [r, { rows: newConnectionsArr = [] }] = await Promise.all([
