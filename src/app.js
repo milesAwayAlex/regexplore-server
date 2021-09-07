@@ -7,6 +7,7 @@ const session = require('cookie-session');
 const tagsRouter = require('./routes/tags');
 const regexesRouter = require('./routes/regexes');
 const testStringRouter = require('./routes/testStrings');
+const authRouter = require('./routes/gitHubAuth');
 
 const app = express();
 app.use(express.json());
@@ -25,5 +26,6 @@ if (process.env.NODE_ENV === 'test') {
 app.use('/tags', tagsRouter(dbClient));
 app.use('/regexes', regexesRouter(dbClient));
 app.use('/test-strings', testStringRouter(dbClient));
+app.use('/auth', authRouter(dbClient));
 
 module.exports = { app };
