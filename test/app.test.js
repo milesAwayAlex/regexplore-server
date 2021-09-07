@@ -5,19 +5,6 @@ const { deepStrictEqual } = require('assert/strict');
 describe('server', () => {
   const agent = request.agent(app);
   afterAll(() => agent.get('/db-test/disconnect'));
-  it('starts up without crashing (yay!)', (done) => {
-    agent.get('/').expect(200, done);
-  });
-  it('connects to the database', (done) => {
-    agent
-      .get('/db-test')
-      .expect(200)
-      .expect(({ body }) => {
-        if (!Array.isArray(body) || !body[0].time)
-          throw new Error('database smoke test');
-      })
-      .end(done);
-  });
   describe('/tags', () => {
     it('returns [{ id, tag_name, popularity }] of top 20 tags on POST /', async () => {
       const { status, body } = await agent
@@ -127,6 +114,20 @@ describe('server', () => {
       it('returns Bad Request with no credentials', async () => {
         const { status } = await agent.post('/login').type('application/json');
         expect(status).toBe(400);
+      });
+      it('bounces the wrong username', async () => {
+        const { status } = await agent.post('/login').send({
+          username: 'wrong@user.io',
+          password: 'testing-testing-testing',
+        });
+        expect(status).toBe(401);
+      });
+      it('bounces the wrong password', async () => {
+        const { status } = await agent.post('/login').send({
+          username: 'test@user.io',
+          password: 'testing-testing',
+        });
+        expect(status).toBe(401);
       });
       it('logs in with proper credentials', async () => {
         const { status } = await agent.post('/login').send({
