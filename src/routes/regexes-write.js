@@ -7,23 +7,12 @@ module.exports = (db) => {
       if (!user?.id) {
         return res.status(401).json({ error: 'User session not found' });
       }
-      const { regexID, title, notes, regex, forkOf, testStr, tags, remove } =
-        body;
+
+      const { regexID, title, notes, regex, testStr, tags, remove } = body;
       const { id: userID } = user;
 
-      let confirmedID = null;
       let newTitle = null;
       let exists = null;
-      let tagsCreated = 0;
-      let tagsAssociated = 0;
-
-      // TODO regex editing logic - confirm regexID with the userID
-      // if the regex should be edited - set confirmedID
-      // edit or create regex conditionally on confirmedID
-      // tags can be generated in parallel with the confirmation
-      // update regexes, regexes_tags, and test_strings can run in parallel
-      // insert into regexes has to run first to produce confirmedID
-      // delete is update set is_public to false
 
       // tags come in two flavors: {id, tagName} and {tagName}
       // separate first
@@ -44,6 +33,48 @@ module.exports = (db) => {
           )
         : {};
 
+      // TODO regex editing logic - confirm regexID with the userID
+      // edit or create regex conditionally on confirmedID
+      // tags can be generated in parallel with the confirmation
+      // update regexes, regexes_tags, and test_strings can run in parallel
+      // insert into regexes has to run first to produce confirmedID
+
+      // assemble the VALUES for tag generation
+      const tagValuesStr = newTags?.map((n, i) => `($${i + 1}::TEXT)`)?.join();
+
+      // confirm regexID/generate the missing tags
+      const [{ rows: confirmIDRows = [] }, { rows: newTagsArr = [] }] =
+        await Promise.all([
+          // confirm regexID with the userID
+          !!regexID &&
+            db.query(
+              `
+        SELECT id
+        FROM regexes
+        WHERE id = $1::INTEGER
+          AND user_id = $2::INTEGER
+        `,
+              [regexID, userID]
+            ),
+          // generate the missing tags
+          !!newTags?.length &&
+            db.query(
+              `
+        INSERT INTO tags (tag_name)
+        VALUES 
+        ${tagValuesStr}
+        ON CONFLICT (tag_name) DO NOTHING
+        RETURNING id;
+        `,
+              [...newTags]
+            ),
+        ]);
+      // if the regex should be edited - set confirmedID
+      let confirmedID = confirmIDRows[0]?.id;
+      // const newTagsArr = newTagsArrBody?.rows || [];
+      // add the new IDs to the existing tags
+      existingTags.push(...newTagsArr.map(({ id }) => id));
+
       // delete regex shortcuts
       if (!confirmedID && remove) {
         return res
@@ -56,7 +87,7 @@ module.exports = (db) => {
         WHERE id = $1::INTEGER;`,
           [confirmedID]
         );
-        return res.json({ exits: false });
+        return res.json({ exists: false });
       }
       // bad request shortcut
       if (!title || !regex) {
@@ -65,26 +96,6 @@ module.exports = (db) => {
           .json({ error: 'A regex requires a title and a literal' });
       }
 
-      // assemble the VALUES for tag generation
-      const tagValuesStr = newTags?.map((n, i) => `($${i + 1}::TEXT)`)?.join();
-
-      // generate the missing tags
-      if (!!newTags?.length) {
-        const { rows: newTagsArr } = await db.query(
-          `
-          INSERT INTO tags (tag_name)
-          VALUES 
-          ${tagValuesStr}
-          ON CONFLICT (tag_name) DO NOTHING
-          RETURNING id;
-          `,
-          [...newTags]
-        );
-        // add the new IDs to the existing tags
-        existingTags.push(...newTagsArr.map(({ id }) => id));
-
-        tagsCreated = newTagsArr.length;
-      }
       // create the regex
       if (!confirmedID) {
         const {
@@ -146,14 +157,13 @@ module.exports = (db) => {
             [confirmedID, ...existingTags]
           ),
       ]);
-      tagsAssociated = newConnectionsArr?.length;
 
       res.json({
         id: confirmedID,
         title: newTitle,
         exists,
-        tagsCreated,
-        tagsAssociated,
+        tagsCreated: newTagsArr?.length || 0,
+        tagsAssociated: newConnectionsArr?.length || 0,
       });
     } catch (e) {
       next(e);
