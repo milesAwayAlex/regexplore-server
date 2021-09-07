@@ -67,5 +67,8 @@ module.exports = (db) => {
     req.session = null;
     res.redirect(process.env.APP_URL);
   });
+  router.get('/userinfo', ({ user }, res) => {
+    res.json(user);
+  });
   return router;
 };
