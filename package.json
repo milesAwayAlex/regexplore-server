@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "The server side of RegExpLore Project",
   "main": "index.js",
+  "engines": {
+    "node": "16.x"
+  },
   "jest": {
     "setupFiles": [
       "dotenv/config"
