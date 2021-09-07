@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const writeRouter = require('./regexes-write');
 
 module.exports = (db) => {
   router.post('/', async ({ body }, res, next) => {
@@ -101,10 +102,10 @@ module.exports = (db) => {
         totalPages: Math.ceil(Number.parseInt(total.rows[0].count) / offset),
       });
     } catch (e) {
-      console.error(e);
       next(e);
     }
   });
+  router.use('/write', writeRouter(db));
 
   return router;
 };
