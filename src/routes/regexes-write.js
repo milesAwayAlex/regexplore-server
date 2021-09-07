@@ -6,7 +6,8 @@ module.exports = (db) => {
     if (!user?.id) {
       return res.status(401).json({ error: 'User session not found' });
     }
-    const { regexID, title, notes, regex, forkOf, testStr, tags } = body;
+    const { regexID, title, notes, regex, forkOf, testStr, tags, remove } =
+      body;
     const { id: userID } = user;
 
     // bad request shortcut
@@ -16,12 +17,19 @@ module.exports = (db) => {
         .json({ error: 'A regex requires a title and a literal' });
     }
 
-    let returnID;
-    let exists;
+    let confirmedID = null;
+    let exists = null;
     let tagsCreated = 0;
     let tagsAssociated = 0;
 
-    // TODO write the tags logic
+    // TODO regex editing logic - confirm regexID with the userID
+    // if the regex should be edited - set confirmedID
+    // edit or create regex conditionally on confirmedID
+    // tags can be generated in parallel with the confirmation
+    // update regexes, regexes_tags, and test_strings can run in parallel
+    // insert into regexes has to run first to produce confirmedID
+    // delete is update set is_public to false
+
     // tags come in two flavors: {id, tagName} and {tagName}
     // separate first
     const { existingTags = [], newTags = [] } = !!tags?.length
@@ -42,10 +50,11 @@ module.exports = (db) => {
       : {};
 
     try {
+      // assemble the VALUES for tag generation
+      const tagValuesStr = newTags?.map((n, i) => `($${i + 1}::TEXT)`)?.join();
+
       // generate the missing tags
       if (!!newTags?.length) {
-        // assemble the VALUES for tag generation
-        const tagValuesStr = newTags.map((n, i) => `($${i + 1}::TEXT)`).join();
         const { rows: newTagsArr } = await db.query(
           `
           INSERT INTO tags (tag_name)
@@ -61,8 +70,8 @@ module.exports = (db) => {
 
         tagsCreated = newTagsArr.length;
       }
-
-      if (!regexID) {
+      // create the regex
+      if (!confirmedID) {
         const {
           rows: [{ id, is_public }],
         } = await db.query(
@@ -83,42 +92,41 @@ module.exports = (db) => {
           [userID, title, notes, regex]
         );
 
-        [returnID, exists] = [id, is_public];
+        [confirmedID, exists] = [id, is_public];
+      }
 
-        // assemble the VALUES for regexes_tags insertion
+      // assemble the VALUES for regexes_tags insertion
 
-        const regexesTagsStr = existingTags
-          .map(
-            (id, i, arr) => `($${arr.length + 1}::INTEGER, $${i + 1}::INTEGER)`
-          )
-          .join();
+      const regexesTagsStr = existingTags
+        ?.map((e, i) => `($1::INTEGER, $${i + 2}::INTEGER)`)
+        ?.join();
 
-        // insert into test_strings and regexes_tags
-        const [r, { rows: newConnectionsArr = [] }] = await Promise.all([
-          db.query(
-            `
+      // insert into test_strings and regexes_tags
+      const [r, { rows: newConnectionsArr = [] }] = await Promise.all([
+        db.query(
+          `
           INSERT INTO test_strings (regex_id, test_string)
           VALUES ($1::INTEGER, $2::TEXT);
             `,
-            [id, testStr]
-          ),
-          // only create associations if there are tags to associate
-          !!existingTags?.length &&
-            db.query(
-              `
+          [confirmedID, testStr]
+        ),
+        // only create associations if there are tags to associate
+        !!existingTags?.length &&
+          db.query(
+            `
           INSERT INTO regexes_tags (regex_id, tag_id)
           VALUES 
             ${regexesTagsStr}
           ON CONFLICT DO NOTHING
           RETURNING tag_id;
             `,
-              [...existingTags, id]
-            ),
-        ]);
-        tagsAssociated = newConnectionsArr?.length;
-      }
+            [confirmedID, ...existingTags]
+          ),
+      ]);
+      tagsAssociated = newConnectionsArr?.length;
+
       res.json({
-        id: returnID,
+        id: confirmedID,
         exists,
         tagsCreated,
         tagsAssociated,
