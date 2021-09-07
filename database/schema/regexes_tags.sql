@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS regexes_tags CASCADE;
 
 CREATE TABLE regexes_tags (
-  regex_id INTEGER NOT NULL REFERENCES regexes(id),
+  regex_id INTEGER NOT NULL REFERENCES regexes(id) ON DELETE CASCADE,
   tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
   PRIMARY KEY(regex_id, tag_id)
 );
