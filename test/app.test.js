@@ -239,7 +239,7 @@ describe('server', () => {
       it('{ regexID, remove } => deletes an owned regex', async () => {
         const { status, body } = await agent
           .post('/regexes/write')
-          .send({ regexID: 23, remove: true });
+          .send({ regexID: 21, remove: true });
         expect(status).toBe(200);
         expect(body).toMatchObject({
           exists: false,

@@ -15,31 +15,27 @@ module.exports = (db) => {
       let exists = null;
 
       // tags come in two flavors: {id, tagName} and {tagName}
-      // separate first
-      const { existingTags = [], newTags = [] } = !!tags?.length
-        ? tags.reduce(
-            (a, { id, tagName }) => {
-              if (!!Number.parseInt(id)) {
-                a.existingTags.push(id);
-              } else {
-                a.newTags.push(tagName);
-              }
-              return a;
-            },
-            {
-              existingTags: [],
-              newTags: [],
+      // separate for processing
+      const { existingTags = [], newTags = [] } =
+        !!tags?.length &&
+        tags.reduce(
+          (a, { id, tagName }) => {
+            if (!!Number.parseInt(id)) {
+              a.existingTags.push(id);
+            } else {
+              a.newTags.push(tagName);
             }
-          )
-        : {};
+            return a;
+          },
+          {
+            existingTags: [],
+            newTags: [],
+          }
+        );
 
-      // TODO regex editing logic - confirm regexID with the userID
-      // edit or create regex conditionally on confirmedID
-      // tags can be generated in parallel with the confirmation
-      // update regexes, regexes_tags, and test_strings can run in parallel
-      // insert into regexes has to run first to produce confirmedID
+      // TODO update regexes, regexes_tags, and test_strings can run in parallel
 
-      // assemble the VALUES for tag generation
+      // assemble the values for tag generation
       const tagValuesStr = newTags?.map((n, i) => `($${i + 1}::TEXT)`)?.join();
 
       // confirm regexID/generate the missing tags
@@ -71,23 +67,22 @@ module.exports = (db) => {
         ]);
       // if the regex should be edited - set confirmedID
       let confirmedID = confirmIDRows[0]?.id;
-      // const newTagsArr = newTagsArrBody?.rows || [];
       // add the new IDs to the existing tags
       existingTags.push(...newTagsArr.map(({ id }) => id));
 
       // delete regex shortcuts
-      if (!confirmedID && remove) {
+      if (remove) {
+        if (confirmedID) {
+          await db.query(
+            `DELETE FROM regexes
+            WHERE id = $1::INTEGER;`,
+            [confirmedID]
+          );
+          return res.json({ exists: false });
+        }
         return res
           .status(403)
           .json({ error: 'Only the owner can delete the regex' });
-      }
-      if (confirmedID && remove) {
-        await db.query(
-          `DELETE FROM regexes
-        WHERE id = $1::INTEGER;`,
-          [confirmedID]
-        );
-        return res.json({ exists: false });
       }
       // bad request shortcut
       if (!title || !regex) {
@@ -111,29 +106,48 @@ module.exports = (db) => {
           )
         RETURNING id,
           title,
-          notes,
-          regex,
           is_public;
         `,
           [userID, title, notes, regex]
         );
 
         [confirmedID, exists, newTitle] = [id, is_public, retTitle];
+      } else {
+        // or update the existing one and clear the test string
+        const [
+          {
+            rows: [{ is_public, title: retTitle }],
+          },
+        ] = await Promise.all([
+          // edit the regex
+          db.query(
+            `
+          UPDATE regexes
+          SET (title, notes, regex) = ($3::TEXT, $4::TEXT, $5::TEXT)
+          WHERE id = $2::INTEGER
+            AND user_id = $1::INTEGER
+          RETURNING id,
+            title,
+            is_public
+          `,
+            [userID, regexID, title, notes, regex]
+          ),
+          // remove the existing test string
+          db.query(
+            `
+          DELETE FROM test_strings
+          WHERE regex_id = $1::INTEGER
+          `,
+            [confirmedID]
+          ),
+        ]);
+        [exists, newTitle] = [is_public, retTitle];
       }
 
       // assemble the values for regexes_tags insertion
       const regexesTagsStr = existingTags
         ?.map((e, i) => `($1::INTEGER, $${i + 2}::INTEGER)`)
         ?.join();
-
-      // remove the existing test string
-      await db.query(
-        `
-      DELETE FROM test_strings
-      WHERE regex_id = $1::INTEGER
-      `,
-        [confirmedID]
-      );
 
       // insert into test_strings and regexes_tags
       const [r, { rows: newConnectionsArr = [] }] = await Promise.all([
