@@ -148,6 +148,7 @@ describe('server', () => {
         expect(status).toBe(200);
         expect(body).toMatchObject({
           id: 21,
+          title: 'Test Regex',
           exists: true,
           tagsCreated: 0,
           tagsAssociated: 1,
@@ -168,6 +169,7 @@ describe('server', () => {
         expect(status).toBe(200);
         expect(body).toMatchObject({
           id: 22,
+          title: 'Test Regex',
           exists: true,
           tagsCreated: 2,
           tagsAssociated: 3,
@@ -183,9 +185,64 @@ describe('server', () => {
         expect(status).toBe(200);
         expect(body).toMatchObject({
           id: 23,
+          title: 'Test Regex',
           exists: true,
           tagsCreated: 0,
           tagsAssociated: 0,
+        });
+      });
+      it('{ regexID, title, notes, regex, testStr, tags: [{ id, tagName }] } => forks an existing regex', async () => {
+        const { body } = await agent.post('/regexes/write').send({
+          regexID: 9,
+          title: 'My Fork',
+          regex: 'fo|rk',
+        });
+        expect(body).toMatchObject({
+          id: 24,
+          title: 'My Fork',
+          exists: true,
+          tagsCreated: 0,
+          tagsAssociated: 0,
+        });
+      });
+      it('{ regexID, title, notes, regex, testStr, tags: [{ id, tagName }] } => edits an existing regex', async () => {
+        const { status, body } = await agent.post('/regexes/write').send({
+          regexID: 23,
+          title: 'Catch 23',
+          notes: 'Some notes',
+          regex: 'major',
+          testStr: 'Major major Major',
+          tags: [
+            { id: 42, tagName: 'existing tag' },
+            { id: 101, tagName: 'new tag' },
+            { id: 102, tagName: 'new tag 2' },
+          ],
+        });
+        expect(status).toBe(200);
+        expect(body).toMatchObject({
+          id: 23,
+          title: 'Catch 23',
+          exists: true,
+          tagsCreated: 0,
+          tagsAssociated: 3,
+        });
+      });
+      it('{ regexID, remove } => returns an error for a non-owned regex', async () => {
+        const { status, body } = await agent
+          .post('/regexes/write')
+          .send({ regexID: 19, remove: true });
+        expect(status).toBe(403);
+        expect(body).toMatchObject({
+          error: 'Only the owner can delete the regex',
+        });
+      });
+      it('{ regexID, remove } => deletes an owned regex', async () => {
+        const { status, body } = await agent
+          .post('/regexes/write')
+          .send({ regexID: 23, remove: true });
+        expect(status).toBe(200);
+        expect(body).toMatchObject({
+          exists: false,
         });
       });
       it('(no title no regex) { notes, testStr, tags } => 400 { error }', async () => {
