@@ -28,6 +28,9 @@ app.use(
   session({
     keys: JSON.parse(process.env.EXPRESS_SESSION_KEYS),
     name: 'regexploreID',
+    maxAge: 24 * 60 * 60 * 100,
+    secure: true,
+    sameSite: 'none',
   })
 );
 app.use(passport.initialize());
