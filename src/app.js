@@ -2,6 +2,8 @@ const express = require('express');
 const { Client } = require('pg');
 const passport = require('passport');
 const session = require('cookie-session');
+const helmet = require('helmet');
+const compression = require('compression');
 
 // routers
 const tagsRouter = require('./routes/tags');
@@ -10,8 +12,24 @@ const testStringRouter = require('./routes/testStrings');
 const authRouter = require('./routes/gitHubAuth');
 
 const app = express();
+app.use(helmet());
+app.use(compression());
+app.use('/', (r, res, next) => {
+  res.set({
+    'Access-Control-Allow-Origin': process.env.APP_URL,
+    'Access-Control-Allow-Headers':
+      'Origin, X-Requested-With, Content-Type, Accept',
+    'Access-Control-Allow-Credentials': true,
+  });
+  next();
+});
 app.use(express.json());
-app.use(session({ keys: JSON.parse(process.env.EXPRESS_SESSION_KEYS) }));
+app.use(
+  session({
+    keys: JSON.parse(process.env.EXPRESS_SESSION_KEYS),
+    name: 'regexploreID',
+  })
+);
 app.use(passport.initialize());
 app.use(passport.session());
 
