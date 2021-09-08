@@ -2,9 +2,8 @@ const router = require('express').Router();
 
 module.exports = (db) => {
   router.post('/search', async ({ body }, res, next) => {
-    // const pageNum = (!!body.requestedPage && body.requestedPage - 1) || 0;
-    const { id } = body;
     try {
+      const { id } = body;
       const { rows } = await db.query(
         `
       SELECT id,
