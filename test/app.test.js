@@ -174,6 +174,10 @@ describe('server', () => {
           exists: true,
           tagsCreated: 2,
           tagsAssociated: 3,
+          newTags: [
+            { id: 101, tagName: 'new tag' },
+            { id: 102, tagName: 'new tag 2' },
+          ],
         });
       });
       it('(no tags array) { title, notes, regex, testStr } => { id, exists, tagsCreated, tagsAssociated }', async () => {
