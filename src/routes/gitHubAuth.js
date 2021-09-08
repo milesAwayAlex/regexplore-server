@@ -57,15 +57,17 @@ module.exports = (db) => {
   );
   router.get(
     '/github/callback',
-    passport.authenticate('github', { failureRedirect: process.env.APP_URL }),
+    passport.authenticate('github', {
+      failureRedirect: process.env.APP_URL + '/test-dep',
+    }),
     (r, res) => {
-      res.redirect(process.env.APP_URL);
+      res.redirect(process.env.APP_URL + '/test-dep');
     }
   );
   router.get('/logout', (req, res) => {
     req.logout();
     req.session = null;
-    res.redirect(process.env.APP_URL);
+    res.redirect(process.env.APP_URL + '/test-dep');
   });
   router.get('/userinfo', ({ user }, res) => {
     res.json(user);
