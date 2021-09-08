@@ -58,7 +58,7 @@ module.exports = (db) => {
         VALUES 
         ${tagValuesStr}
         ON CONFLICT (tag_name) DO NOTHING
-        RETURNING id;
+        RETURNING id, tag_name;
         `,
               [...newTags]
             ),
@@ -184,6 +184,10 @@ module.exports = (db) => {
         exists,
         tagsCreated: newTagsArr?.length || 0,
         tagsAssociated: newConnectionsArr?.length || 0,
+        newTags: newTagsArr.map(({ id, tag_name }) => ({
+          id,
+          tagName: tag_name,
+        })),
       });
     } catch (e) {
       next(e);
