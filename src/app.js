@@ -28,8 +28,10 @@ app.use(
   session({
     secret: process.env.EXPRESS_SESSION_KEYS,
     name: 'regexploreID',
-    sameSite: 'none',
-    secure: true,
+    // the server and the client are to be deployed on different hosts
+    sameSite: process.env.NODE_ENV !== 'test' && 'none',
+    // if sameSite is set, the cookies need secure to be set too
+    secure: process.env.NODE_ENV !== 'test' && true,
   })
 );
 app.use(passport.initialize());
