@@ -24,8 +24,8 @@ module.exports = (db) => {
     }
   });
   router.post('/search', async ({ body }, res, next) => {
-    const { id, tsq } = body;
     try {
+      const { id, tsq } = body;
       if (!!id) {
         const { rows } = await db.query(
           `
