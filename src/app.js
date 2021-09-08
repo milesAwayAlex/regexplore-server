@@ -28,10 +28,8 @@ app.use(
   session({
     secret: process.env.EXPRESS_SESSION_KEYS,
     name: 'regexploreID',
-    cookie: {
-      secure: true,
-      sameSite: 'none',
-    },
+    sameSite: 'none',
+    secure: true,
   })
 );
 app.use(passport.initialize());
