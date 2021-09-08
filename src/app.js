@@ -26,7 +26,7 @@ app.use('/', (r, res, next) => {
 app.use(express.json());
 app.use(
   session({
-    keys: JSON.parse(process.env.EXPRESS_SESSION_KEYS),
+    secret: process.env.EXPRESS_SESSION_KEYS,
     name: 'regexploreID',
     cookie: {
       secure: true,
